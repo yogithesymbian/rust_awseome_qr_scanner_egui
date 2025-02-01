@@ -4,6 +4,12 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
+fn filter_scanned_data(data: String) -> String {
+    // Remove Carriage Return (CR) and Line Feed (LF) characters from the end of the data
+    data.trim_end_matches(|c| c == '\r' || c == '\n')
+        .to_string()
+}
+
 struct BarcodeApp {
     ports: Vec<String>,
     selected_port_enter: Option<String>,
@@ -39,10 +45,11 @@ impl BarcodeApp {
                     match port.read(&mut buf) {
                         Ok(bytes_read) => {
                             let data = String::from_utf8_lossy(&buf[..bytes_read]).to_string();
+                            let filtered_data = filter_scanned_data(data);
                             scan_results
                                 .lock()
                                 .unwrap()
-                                .push(format!("{}: {}", port_name, data));
+                                .push(format!("{}: {}", port_name, filtered_data));
                         }
                         Err(_) => {}
                     }
