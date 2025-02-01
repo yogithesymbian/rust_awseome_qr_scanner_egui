@@ -49,6 +49,13 @@ impl BarcodeApp {
                             // Convert bytes read into a part of the barcode data
                             let part = String::from_utf8_lossy(&buffer[..bytes_read]);
                             barcode_data.push_str(&part);
+
+                            // Check if scanner sends a newline or carriage return at the end
+                            if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
+                                barcode_data = barcode_data.trim().to_string(); // Remove extra spaces/newlines
+                                println!("[0] Scanned Barcode: {}", barcode_data);
+                                barcode_data.clear(); // Reset for next scan
+                            }
                             println!("[1] Scanned Barcode: {}", barcode_data);
 
                             scan_results
