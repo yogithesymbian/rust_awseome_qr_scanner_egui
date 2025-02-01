@@ -1,24 +1,38 @@
-use eframe::{egui, App};
-use serialport::SerialPort;
-use std::io::Read;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+// main.rs
 
-struct BarcodeApp {
-    ports: Vec<String>,
-    selected_port: Option<String>,
-    barcode: Arc<Mutex<String>>,
+mod app;
+
+use app::BarcodeApp;
+use eframe::NativeOptions;
+
+fn main() {
+    let app = BarcodeApp::default();
+    let native_options = NativeOptions::default();
+    eframe::run_native(
+        "Barcode Scanner GUI",
+        native_options,
+        Box::new(|_cc| Box::new(app)),
+    );
+}
+
+// app.rs
+
+mod scanner;
+
+use crate::scanner::BarcodeScanner;
+use eframe::{egui, App};
+use std::sync::{Arc, Mutex};
+
+pub struct BarcodeApp {
+    entry_scanner: BarcodeScanner,
+    exit_scanner: BarcodeScanner,
 }
 
 impl Default for BarcodeApp {
     fn default() -> Self {
         Self {
-            ports: serialport::available_ports()
-                .map(|ports| ports.into_iter().map(|p| p.port_name).collect())
-                .unwrap_or_else(|_| vec![]),
-            selected_port: None,
-            barcode: Arc::new(Mutex::new(String::new())),
+            entry_scanner: BarcodeScanner::new("Entry"),
+            exit_scanner: BarcodeScanner::new("Exit"),
         }
     }
 }
@@ -26,9 +40,48 @@ impl Default for BarcodeApp {
 impl App for BarcodeApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Barcode Scanner");
+            ui.heading("Barcode Scanner GUI");
 
-            // Port Selection Dropdown
+            ui.horizontal(|ui| {
+                self.entry_scanner.ui(ui);
+                self.exit_scanner.ui(ui);
+            });
+        });
+    }
+}
+
+// scanner.rs
+
+use eframe::egui;
+use serialport::SerialPort;
+use std::io::Read;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
+
+pub struct BarcodeScanner {
+    label: String,
+    ports: Vec<String>,
+    selected_port: Option<String>,
+    barcode: Arc<Mutex<String>>,
+}
+
+impl BarcodeScanner {
+    pub fn new(label: &str) -> Self {
+        Self {
+            label: label.to_string(),
+            ports: serialport::available_ports()
+                .map(|ports| ports.into_iter().map(|p| p.port_name).collect())
+                .unwrap_or_else(|_| vec![]),
+            selected_port: None,
+            barcode: Arc::new(Mutex::new(String::new())),
+        }
+    }
+
+    pub fn ui(&mut self, ui: &mut egui::Ui) {
+        ui.group(|ui| {
+            ui.heading(&self.label);
+
             egui::ComboBox::from_label("Select Port")
                 .selected_text(
                     self.selected_port
@@ -45,14 +98,12 @@ impl App for BarcodeApp {
                     }
                 });
 
-            // Auto-Detect Button
             if ui.button("Auto-Detect Ports").clicked() {
                 self.ports = serialport::available_ports()
                     .map(|ports| ports.into_iter().map(|p| p.port_name).collect())
                     .unwrap_or_else(|_| vec![]);
             }
 
-            // Start Reading Barcode
             if let Some(port_name) = &self.selected_port {
                 let barcode = Arc::clone(&self.barcode);
                 let port_name = port_name.clone();
@@ -83,19 +134,8 @@ impl App for BarcodeApp {
                 });
             }
 
-            // Live Barcode Display
             let barcode = self.barcode.lock().unwrap().clone();
             ui.label(format!("Scanned Barcode: {}", barcode));
         });
     }
-}
-
-fn main() {
-    let app = BarcodeApp::default();
-    let native_options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "Barcode Scanner GUI",
-        native_options,
-        Box::new(|_cc| Box::new(app)),
-    );
 }
