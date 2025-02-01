@@ -49,11 +49,13 @@ impl BarcodeApp {
                             // Convert bytes read into a part of the barcode data
                             let part = String::from_utf8_lossy(&buffer[..bytes_read]);
                             barcode_data.push_str(&part);
+                            println!("[1] Scanned Barcode: {}", barcode_data);
 
                             // Check if we have reached the end of the barcode (CR or LF)
                             if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
                                 // Filter and store the scanned barcode, clearing data afterward
                                 let filtered_data = filter_scanned_data(barcode_data.clone());
+                                println!("[2] Scanned Barcode: {}", filtered_data);
                                 scan_results
                                     .lock()
                                     .unwrap()
