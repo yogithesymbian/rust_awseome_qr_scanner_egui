@@ -40,18 +40,27 @@ impl BarcodeApp {
                 .timeout(Duration::from_secs(1))
                 .open()
             {
-                let mut buf = vec![0; 256];
+                let mut buffer = vec![0; 128]; // Adjust the buffer size if needed
+                let mut barcode_data = String::new(); // To accumulate barcode data
+
                 loop {
-                    match port.read(&mut buf) {
-                        Ok(bytes_read) => {
-                            let data = String::from_utf8_lossy(&buf[..bytes_read]).to_string();
-                            let filtered_data = filter_scanned_data(data);
-                            scan_results
-                                .lock()
-                                .unwrap()
-                                .push(format!("{}: {}", port_name, filtered_data));
+                    if let Ok(bytes_read) = port.read(&mut buffer) {
+                        if bytes_read > 0 {
+                            // Convert bytes read into a part of the barcode data
+                            let part = String::from_utf8_lossy(&buffer[..bytes_read]);
+                            barcode_data.push_str(&part);
+
+                            // Check if we have reached the end of the barcode (CR or LF)
+                            if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
+                                // Filter and store the scanned barcode, clearing data afterward
+                                let filtered_data = filter_scanned_data(barcode_data.clone());
+                                scan_results
+                                    .lock()
+                                    .unwrap()
+                                    .push(format!("{}: {}", port_name, filtered_data));
+                                barcode_data.clear(); // Reset for next barcode
+                            }
                         }
-                        Err(_) => {}
                     }
                 }
             }
