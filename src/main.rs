@@ -1,16 +1,13 @@
-// main.rs
-
 mod app;
+mod scanner;
 
-use app::BarcodeApp;
-use eframe::NativeOptions;
+use eframe::egui;
 
 fn main() {
-    let app = BarcodeApp::default();
-    let native_options = NativeOptions::default();
+    let options = eframe::NativeOptions::default();
     eframe::run_native(
-        "Barcode Scanner GUI",
-        native_options,
-        Box::new(|_cc| Box::new(app)),
-    );
-}
+        "Barcode Scanner App",
+        options,
+        Box::new(|_cc| Box::new(app::BarcodeApp::default())),
+    ).unwrap();
+} 
