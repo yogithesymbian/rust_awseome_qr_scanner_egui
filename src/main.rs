@@ -9,5 +9,6 @@ fn main() {
         "Barcode Scanner App",
         options,
         Box::new(|_cc| Box::new(app::BarcodeApp::default())),
-    ).unwrap();
-} 
+    )
+    .unwrap();
+}

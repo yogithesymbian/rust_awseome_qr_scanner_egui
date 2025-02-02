@@ -1,5 +1,4 @@
 // src/scanner.rs
-
 use serialport::SerialPort;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
@@ -7,12 +6,14 @@ use std::thread;
 
 pub struct BarcodeScanner {
     port_name: String,
+    state_from: String, // New field to track if it's from the entry or exit port
 }
 
 impl BarcodeScanner {
-    pub fn new(port_name: &str) -> Self {
+    pub fn new(port_name: &str, state_from: &str) -> Self {
         let scanner = Self {
             port_name: port_name.to_string(),
+            state_from: state_from.to_string(), // Set the state based on the caller
         };
         scanner.start_listening();
         scanner
@@ -26,6 +27,7 @@ impl BarcodeScanner {
 
     fn start_listening(&self) {
         let port_name = self.port_name.clone();
+        let state_from = self.state_from.clone(); // Clone the state for use in the thread
         thread::spawn(move || {
             if let Ok(mut port) = serialport::new(&port_name, 9600).open() {
                 let mut buffer = vec![0; 1024]; // Adjust the buffer size if needed
@@ -37,21 +39,15 @@ impl BarcodeScanner {
                             // Convert bytes read into a part of the barcode data
                             let part = String::from_utf8_lossy(&buffer[..bytes_read]);
                             barcode_data.push_str(&part);
-                            println!("[1] Scanned Barcode: from {} : {}", port_name, barcode_data);
                             // Check if scanner sends a newline or carriage return at the end
                             if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
                                 barcode_data = barcode_data.trim().to_string(); // Remove extra spaces/newlines
                                 println!(
-                                    "[2] Scanned Barcode: from {} : {}",
-                                    port_name, barcode_data
+                                    "[2] Scanned Barcode: from {} ({}): {}",
+                                    port_name, state_from, barcode_data
                                 );
                                 barcode_data.clear(); // Reset for next scan
                             }
-                            println!("[3] Scanned Barcode: from {} : {}", port_name, barcode_data);
-                            // scan_results
-                            //     .lock()
-                            //     .unwrap()
-                            //     .push(format!("{}: {}", port_name, barcode_data));
                         }
                     }
                 }

@@ -1,4 +1,3 @@
-
 // src/app.rs
 
 use crate::scanner::BarcodeScanner;
@@ -36,9 +35,18 @@ impl eframe::App for BarcodeApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Barcode Scanner App");
 
+            // Entry port
             ui.horizontal(|ui| {
                 ui.label("Entry Port:");
-                if ui.button(&self.entry_port.clone().unwrap_or_else(|| "Select Port".into())).clicked() {
+                if ui
+                    .button(
+                        &self
+                            .entry_port
+                            .clone()
+                            .unwrap_or_else(|| "Select Port".into()),
+                    )
+                    .clicked()
+                {
                     self.is_entry_dropdown_open = !self.is_entry_dropdown_open;
                     self.is_exit_dropdown_open = false;
                 }
@@ -46,21 +54,38 @@ impl eframe::App for BarcodeApp {
 
             if self.is_entry_dropdown_open {
                 egui::ComboBox::from_id_source("entry_port_dropdown")
-                    .selected_text(self.entry_port.clone().unwrap_or_else(|| "Select Port".into()))
+                    .selected_text(
+                        self.entry_port
+                            .clone()
+                            .unwrap_or_else(|| "Select Port".into()),
+                    )
                     .show_ui(ui, |ui| {
                         for port in &self.available_ports {
-                            if ui.selectable_label(self.entry_port.as_ref() == Some(port), port).clicked() {
+                            if ui
+                                .selectable_label(self.entry_port.as_ref() == Some(port), port)
+                                .clicked()
+                            {
                                 self.entry_port = Some(port.clone());
-                                self.entry_scanner = Some(Arc::new(Mutex::new(BarcodeScanner::new(port))));
+                                self.entry_scanner =
+                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "entry"))));
                                 self.is_entry_dropdown_open = false;
                             }
                         }
                     });
             }
 
+            // Exit port
             ui.horizontal(|ui| {
                 ui.label("Exit Port:");
-                if ui.button(&self.exit_port.clone().unwrap_or_else(|| "Select Port".into())).clicked() {
+                if ui
+                    .button(
+                        &self
+                            .exit_port
+                            .clone()
+                            .unwrap_or_else(|| "Select Port".into()),
+                    )
+                    .clicked()
+                {
                     self.is_exit_dropdown_open = !self.is_exit_dropdown_open;
                     self.is_entry_dropdown_open = false;
                 }
@@ -68,12 +93,20 @@ impl eframe::App for BarcodeApp {
 
             if self.is_exit_dropdown_open {
                 egui::ComboBox::from_id_source("exit_port_dropdown")
-                    .selected_text(self.exit_port.clone().unwrap_or_else(|| "Select Port".into()))
+                    .selected_text(
+                        self.exit_port
+                            .clone()
+                            .unwrap_or_else(|| "Select Port".into()),
+                    )
                     .show_ui(ui, |ui| {
                         for port in &self.available_ports {
-                            if ui.selectable_label(self.exit_port.as_ref() == Some(port), port).clicked() {
+                            if ui
+                                .selectable_label(self.exit_port.as_ref() == Some(port), port)
+                                .clicked()
+                            {
                                 self.exit_port = Some(port.clone());
-                                self.exit_scanner = Some(Arc::new(Mutex::new(BarcodeScanner::new(port))));
+                                self.exit_scanner =
+                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "exit"))));
                                 self.is_exit_dropdown_open = false;
                             }
                         }
