@@ -6,14 +6,14 @@ use std::thread;
 
 pub struct BarcodeScanner {
     port_name: String,
-    port_type: String, // Track whether it's "entry" or "exit"
+    port_role: String, // 'entry' or 'exit'
 }
 
 impl BarcodeScanner {
-    pub fn new(port_name: &str, port_type: &str) -> Self {
+    pub fn new(port_name: &str, port_role: &str) -> Self {
         let scanner = Self {
             port_name: port_name.to_string(),
-            port_type: port_type.to_string(),
+            port_role: port_role.to_string(),
         };
         scanner.start_listening();
         scanner
@@ -27,7 +27,8 @@ impl BarcodeScanner {
 
     fn start_listening(&self) {
         let port_name = self.port_name.clone();
-        let port_type = self.port_type.clone(); // Capture port type (entry or exit)
+        let port_role = self.port_role.clone(); // Use port role (entry/exit)
+
         thread::spawn(move || {
             if let Ok(mut port) = serialport::new(&port_name, 9600).open() {
                 let mut buffer = vec![0; 1024]; // Adjust the buffer size if needed
@@ -43,8 +44,8 @@ impl BarcodeScanner {
                             if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
                                 barcode_data = barcode_data.trim().to_string(); // Remove extra spaces/newlines
                                 println!(
-                                    "[2] Scanned Barcode: from {} : {} {}",
-                                    port_name, port_type, barcode_data
+                                    "[2] Scanned Barcode: from {} : {} : {}",
+                                    port_name, port_role, barcode_data
                                 );
                                 barcode_data.clear(); // Reset for next scan
                             }
