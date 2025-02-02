@@ -66,8 +66,15 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.entry_port = Some(port.clone());
-                                self.entry_scanner =
-                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "entry"))));
+                                // Set the state for entry, or entry_exit if both ports are the same
+                                let state_from = if self.entry_port == self.exit_port {
+                                    "entry_exit"
+                                } else {
+                                    "entry"
+                                };
+                                self.entry_scanner = Some(Arc::new(Mutex::new(
+                                    BarcodeScanner::new(port, state_from),
+                                )));
                                 self.is_entry_dropdown_open = false;
                             }
                         }
@@ -105,8 +112,15 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.exit_port = Some(port.clone());
-                                self.exit_scanner =
-                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "exit"))));
+                                // Set the state for exit, or entry_exit if both ports are the same
+                                let state_from = if self.entry_port == self.exit_port {
+                                    "entry_exit"
+                                } else {
+                                    "exit"
+                                };
+                                self.exit_scanner = Some(Arc::new(Mutex::new(
+                                    BarcodeScanner::new(port, state_from),
+                                )));
                                 self.is_exit_dropdown_open = false;
                             }
                         }
