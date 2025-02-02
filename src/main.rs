@@ -15,6 +15,7 @@ struct BarcodeApp {
     exit_thread: Option<thread::JoinHandle<()>>,  // Track the exit port listener thread
     entry_shutdown: Arc<AtomicBool>,              // Atomic flag to signal shutdown for entry thread
     exit_shutdown: Arc<AtomicBool>,               // Atomic flag to signal shutdown for exit thread
+    entry_exit: Arc<AtomicBool>,                  // Flag to track combined thread status
 }
 
 impl BarcodeApp {
@@ -32,6 +33,7 @@ impl BarcodeApp {
             exit_thread: None,
             entry_shutdown: Arc::new(AtomicBool::new(false)), // Initialize the shutdown flag
             exit_shutdown: Arc::new(AtomicBool::new(false)),  // Initialize the shutdown flag
+            entry_exit: Arc::new(AtomicBool::new(false)),     // Flag for combined thread
         }
     }
 
@@ -87,9 +89,19 @@ impl eframe::App for BarcodeApp {
 
                             let entry_shutdown = self.entry_shutdown.clone(); // Clone the shutdown flag
                             let port_clone = port.clone();
-                            self.entry_thread = Some(thread::spawn(move || {
-                                listen_on_port(port_clone, "Entry", entry_shutdown);
-                            }));
+                            self.entry_exit
+                                .store(self.entry_port == self.exit_port, Ordering::SeqCst); // Check if ports are the same
+                            if self.entry_exit.load(Ordering::SeqCst) {
+                                // If both ports are the same, start only 1 thread
+                                self.entry_thread = Some(thread::spawn(move || {
+                                    listen_on_port(port_clone, "Entry/Exit", entry_shutdown);
+                                }));
+                            } else {
+                                // If the ports are different, start individual threads
+                                self.entry_thread = Some(thread::spawn(move || {
+                                    listen_on_port(port_clone, "Entry", entry_shutdown);
+                                }));
+                            }
                         }
                     });
 
@@ -130,9 +142,14 @@ impl eframe::App for BarcodeApp {
 
                             let exit_shutdown = self.exit_shutdown.clone(); // Clone the shutdown flag
                             let port_clone = port.clone();
-                            self.exit_thread = Some(thread::spawn(move || {
-                                listen_on_port(port_clone, "Exit", exit_shutdown);
-                            }));
+                            self.entry_exit
+                                .store(self.entry_port == self.exit_port, Ordering::SeqCst); // Check if ports are the same
+                            if !self.entry_exit.load(Ordering::SeqCst) {
+                                // If ports are different, start a separate exit thread
+                                self.exit_thread = Some(thread::spawn(move || {
+                                    listen_on_port(port_clone, "Exit", exit_shutdown);
+                                }));
+                            }
                         }
                     });
 
