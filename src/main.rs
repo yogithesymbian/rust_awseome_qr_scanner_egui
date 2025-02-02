@@ -88,7 +88,9 @@ impl eframe::App for BarcodeApp {
                             self.shared_state.lock().unwrap().0 = Some(port.clone());
 
                             let entry_shutdown = self.entry_shutdown.clone(); // Clone the shutdown flag
+
                             let port_clone = port.clone();
+
                             self.entry_exit
                                 .store(self.entry_port == self.exit_port, Ordering::SeqCst); // Check if ports are the same
                             if self.entry_exit.load(Ordering::SeqCst) {
@@ -141,11 +143,19 @@ impl eframe::App for BarcodeApp {
                             self.shared_state.lock().unwrap().1 = Some(port.clone());
 
                             let exit_shutdown = self.exit_shutdown.clone(); // Clone the shutdown flag
+
                             let port_clone = port.clone();
+
                             self.entry_exit
                                 .store(self.entry_port == self.exit_port, Ordering::SeqCst); // Check if ports are the same
-                            if !self.entry_exit.load(Ordering::SeqCst) {
-                                // If ports are different, start a separate exit thread
+
+                            if self.entry_exit.load(Ordering::SeqCst) {
+                                // If both ports are the same, start only 1 thread
+                                self.entry_thread = Some(thread::spawn(move || {
+                                    listen_on_port(port_clone, "Entry/Exit", exit_shutdown);
+                                }));
+                            } else {
+                                // If the ports are different, start individual threads // If ports are different, start a separate exit thread
                                 self.exit_thread = Some(thread::spawn(move || {
                                     listen_on_port(port_clone, "Exit", exit_shutdown);
                                 }));
