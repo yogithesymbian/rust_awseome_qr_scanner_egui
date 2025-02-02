@@ -182,8 +182,6 @@ fn listen_on_port(port_name: String, port_type: &str, shutdown_flag: Arc<AtomicB
                             barcode_data.push_str(&part);
 
                             if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
-                                // let mut barcode = barcode.lock().unwrap();
-                                // *barcode = barcode_data.trim().to_string();
                                 println!("[{}] Scanned barcode: {}", port_type, barcode_data);
                                 barcode_data.clear();
                             }
