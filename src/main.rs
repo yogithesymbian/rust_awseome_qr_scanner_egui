@@ -166,6 +166,7 @@ fn listen_on_port(port_name: String, port_type: &str, shutdown_flag: Arc<AtomicB
         Ok(mut port) => {
             println!("Listening on {} port: {}", port_type, port_name);
             let mut buffer = [0; 1024];
+            let mut barcode_data = String::new();
 
             loop {
                 // Check if we should stop listening
@@ -177,8 +178,15 @@ fn listen_on_port(port_name: String, port_type: &str, shutdown_flag: Arc<AtomicB
                 match port.read(&mut buffer) {
                     Ok(bytes_read) => {
                         if bytes_read > 0 {
-                            let barcode = String::from_utf8_lossy(&buffer[..bytes_read]);
-                            println!("[{}] Scanned barcode: {}", port_type, barcode);
+                            let part = String::from_utf8_lossy(&buffer[..bytes_read]);
+                            barcode_data.push_str(&part);
+
+                            if barcode_data.ends_with('\n') || barcode_data.ends_with('\r') {
+                                // let mut barcode = barcode.lock().unwrap();
+                                // *barcode = barcode_data.trim().to_string();
+                                println!("[{}] Scanned barcode: {}", port_type, barcode_data);
+                                barcode_data.clear();
+                            }
                         }
                     }
                     Err(ref e) if e.kind() == std::io::ErrorKind::TimedOut => {
