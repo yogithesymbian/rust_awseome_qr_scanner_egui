@@ -35,20 +35,24 @@ impl eframe::App for BarcodeApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Barcode Scanner App");
 
-            // Entry port selection
+            // Entry Port Section
             ui.horizontal(|ui| {
                 ui.label("Entry Port:");
-                if ui
-                    .button(
-                        &self
-                            .entry_port
-                            .clone()
-                            .unwrap_or_else(|| "Select Port".into()),
-                    )
-                    .clicked()
-                {
+                let entry_port_label = self
+                    .entry_port
+                    .clone()
+                    .unwrap_or_else(|| "Select Port".into());
+                if ui.button(&entry_port_label).clicked() {
                     self.is_entry_dropdown_open = !self.is_entry_dropdown_open;
                     self.is_exit_dropdown_open = false;
+                }
+
+                // "Remove" button to unselect the entry port
+                if self.entry_port.is_some() {
+                    if ui.button("Remove").clicked() {
+                        self.entry_port = None;
+                        self.entry_scanner = None; // Clear the scanner as well
+                    }
                 }
             });
 
@@ -66,7 +70,6 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.entry_port = Some(port.clone());
-                                // Handle entry scanner state
                                 self.entry_scanner =
                                     Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "entry"))));
                                 self.is_entry_dropdown_open = false;
@@ -75,20 +78,24 @@ impl eframe::App for BarcodeApp {
                     });
             }
 
-            // Exit port selection
+            // Exit Port Section
             ui.horizontal(|ui| {
                 ui.label("Exit Port:");
-                if ui
-                    .button(
-                        &self
-                            .exit_port
-                            .clone()
-                            .unwrap_or_else(|| "Select Port".into()),
-                    )
-                    .clicked()
-                {
+                let exit_port_label = self
+                    .exit_port
+                    .clone()
+                    .unwrap_or_else(|| "Select Port".into());
+                if ui.button(&exit_port_label).clicked() {
                     self.is_exit_dropdown_open = !self.is_exit_dropdown_open;
                     self.is_entry_dropdown_open = false;
+                }
+
+                // "Remove" button to unselect the exit port
+                if self.exit_port.is_some() {
+                    if ui.button("Remove").clicked() {
+                        self.exit_port = None;
+                        self.exit_scanner = None; // Clear the scanner as well
+                    }
                 }
             });
 
@@ -106,7 +113,6 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.exit_port = Some(port.clone());
-                                // Handle exit scanner state
                                 self.exit_scanner =
                                     Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "exit"))));
                                 self.is_exit_dropdown_open = false;
