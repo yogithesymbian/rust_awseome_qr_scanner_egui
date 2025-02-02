@@ -35,7 +35,7 @@ impl eframe::App for BarcodeApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Barcode Scanner App");
 
-            // Entry port
+            // Entry port selection
             ui.horizontal(|ui| {
                 ui.label("Entry Port:");
                 if ui
@@ -66,22 +66,16 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.entry_port = Some(port.clone());
-                                // Set the state for entry, or entry_exit if both ports are the same
-                                let state_from = if self.entry_port == self.exit_port {
-                                    "entry_exit"
-                                } else {
-                                    "entry"
-                                };
-                                self.entry_scanner = Some(Arc::new(Mutex::new(
-                                    BarcodeScanner::new(port, state_from),
-                                )));
+                                // Handle entry scanner state
+                                self.entry_scanner =
+                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "entry"))));
                                 self.is_entry_dropdown_open = false;
                             }
                         }
                     });
             }
 
-            // Exit port
+            // Exit port selection
             ui.horizontal(|ui| {
                 ui.label("Exit Port:");
                 if ui
@@ -112,15 +106,9 @@ impl eframe::App for BarcodeApp {
                                 .clicked()
                             {
                                 self.exit_port = Some(port.clone());
-                                // Set the state for exit, or entry_exit if both ports are the same
-                                let state_from = if self.entry_port == self.exit_port {
-                                    "entry_exit"
-                                } else {
-                                    "exit"
-                                };
-                                self.exit_scanner = Some(Arc::new(Mutex::new(
-                                    BarcodeScanner::new(port, state_from),
-                                )));
+                                // Handle exit scanner state
+                                self.exit_scanner =
+                                    Some(Arc::new(Mutex::new(BarcodeScanner::new(port, "exit"))));
                                 self.is_exit_dropdown_open = false;
                             }
                         }

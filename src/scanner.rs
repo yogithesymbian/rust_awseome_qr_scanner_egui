@@ -13,7 +13,7 @@ impl BarcodeScanner {
     pub fn new(port_name: &str, state_from: &str) -> Self {
         let scanner = Self {
             port_name: port_name.to_string(),
-            state_from: state_from.to_string(), // Set the state based on the caller
+            state_from: state_from.to_string(),
         };
         scanner.start_listening();
         scanner
@@ -27,7 +27,7 @@ impl BarcodeScanner {
 
     fn start_listening(&self) {
         let port_name = self.port_name.clone();
-        let state_from = self.state_from.clone(); // Clone the state for use in the thread
+        let state_from = self.state_from.clone(); // Capture the state (entry or exit)
         thread::spawn(move || {
             if let Ok(mut port) = serialport::new(&port_name, 9600).open() {
                 let mut buffer = vec![0; 1024]; // Adjust the buffer size if needed
