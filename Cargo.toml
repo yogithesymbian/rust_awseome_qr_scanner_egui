@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 egui = "0.18"
 eframe = "0.18"
-tray-item = "0.1"
+tray-item = "0.10.0"

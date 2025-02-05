@@ -5,21 +5,23 @@ fn main() {
     // Create a system tray item
     let mut tray = TrayItem::new("Tray Example", IconSource::Resource("default-icon")).unwrap();
 
-    // Add a menu item to the tray
+    // Add a label to the tray
     tray.add_label("Tray Label").unwrap();
 
     // Create a channel to communicate between the tray and the GUI
     let (tx, rx) = std::sync::mpsc::channel();
 
-    // Add a menu item to show the GUI
+    // Clone `tx` for the "Show GUI" menu item
+    let tx_show_gui = tx.clone();
     tray.add_menu_item("Show GUI", move || {
-        tx.send(TrayEvent::ShowGui).unwrap();
+        tx_show_gui.send(TrayEvent::ShowGui).unwrap();
     })
     .unwrap();
 
-    // Add a menu item to quit the application
+    // Clone `tx` for the "Quit" menu item
+    let tx_quit = tx.clone();
     tray.add_menu_item("Quit", move || {
-        tx.send(TrayEvent::Quit).unwrap();
+        tx_quit.send(TrayEvent::Quit).unwrap();
     })
     .unwrap();
 
